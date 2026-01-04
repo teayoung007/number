@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>슈퍼 넘버블럭스 파티!</title>
+    <style>
+        :root { --main-color: #ffde59; }
+        body { 
+            text-align: center; 
+            background: radial-gradient(circle, #fff9e6 0%, #ffecb3 100%); 
+            font-family: 'Apple SD Gothic Neo', sans-serif; 
+            padding: 10px; 
+            margin: 0;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .sticker-board {
+            background: rgba(255, 255, 255, 0.8); border: 4px solid var(--main-color); border-radius: 50px;
+            padding: 10px; margin: 10px auto; width: 90%; min-height: 50px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; justify-content: center;
+        }
+
+        .stage { 
+            display: flex; justify-content: space-around; align-items: center;
+            margin: 15px auto; width: 95%; max-width: 800px;
+            background: white; border-radius: 30px; border: 6px solid var(--main-color);
+            padding: 15px; min-height: 200px; position: relative;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.05);
+        }
+        
+        .image-box { flex: 1; display: flex; justify-content: center; align-items: center; }
+        .image-box img { max-height: 150px; max-width: 90%; display: none; object-fit: contain; }
+        
+        .dance { animation: jump 0.5s infinite alternate; }
+        @keyframes jump { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+        
+        .math-symbol { font-size: 40px; font-weight: bold; color: #ff5757; text-shadow: 1px 1px 0 white; }
+
+        .selection-group { background: white; padding: 15px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .btn-label { display: block; margin-bottom: 10px; font-size: 1.1rem; font-weight: bold; color: #444; }
+        
+        .controls { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; max-width: 500px; margin: 0 auto; }
+        
+        button {
+            padding: 15px 5px; font-size: 1.2rem; font-weight: bold; cursor: pointer;
+            border: none; border-radius: 12px; transition: all 0.2s; box-shadow: 0 4px #ddd;
+        }
+        button:active { transform: translateY(4px); box-shadow: none; }
+        
+        .num1-btn { background: #ff7675; color: white; }
+        .num2-btn { background: #74b9ff; color: white; }
+        .active { outline: 4px solid #333; transform: scale(1.05); z-index: 10; }
+
+        .add-action-btn { 
+            background: #55efc4; color: #2d3436; font-size: 1.5rem; 
+            width: 95%; max-width: 500px; margin: 10px auto 30px; padding: 20px;
+            border-radius: 20px; box-shadow: 0 6px #2ecc71; display: block;
+        }
+
+        .confetti { position: fixed; font-size: 30px; user-select: none; pointer-events: none; z-index: 100; }
+        
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sticker-board" id="sticker-board"></div>
+    
+    <div class="stage">
+        <div class="image-box"><img id="img-num1" src=""></div>
+        <div class="math-symbol">+</div>
+        <div class="image-box"><img id="img-num2" src=""></div>
+        <div class="math-symbol">=</div>
+        <div class="image-box"><img id="img-result" src=""></div>
+    </div>
+
+    <div class="selection-group">
+        <span class="btn-label">🎒 첫 번째 친구 (1~10)</span>
+        <div class="controls">
+            <script>
+                for(let i=1; i<=10; i++) 
+                    document.write(`<button class="num1-btn" onclick="selectNum(1, ${i}, this)">${i}</button>`);
+            </script>
+        </div>
+    </div>
+
+    <div class="selection-group">
+        <span class="btn-label">🎒 두 번째 친구 (1~10)</span>
+        <div class="controls">
+            <script>
+                for(let i=1; i<=10; i++) 
+                    document.write(`<button class="num2-btn" onclick="selectNum(2, ${i}, this)">${i}</button>`);
+            </script>
+        </div>
+    </div>
+
+    <button class="add-action-btn" onclick="calculateSum()">합체! 정답 확인하기 ⚡</button>
+
+    <script>
+        let val1 = 0; let val2 = 0;
+
+        function selectNum(group, num, btn) {
+            const btns = document.querySelectorAll(group === 1 ? '.num1-btn' : '.num2-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const resultImg = document.getElementById('img-result');
+            resultImg.style.display = 'none';
+            resultImg.classList.remove('dance');
+
+            if (group === 1) {
+                val1 = num;
+                showImg('img-num1', num);
+            } else {
+                val2 = num;
+                showImg('img-num2', num);
+            }
+            speak(num);
+        }
+
+        // 이미지 경로를 GitHub Pages 환경에 맞게 최적화했습니다.
+        function showImg(id, num) {
+            const img = document.getElementById(id);
+            // ./ 를 붙여 현재 폴더임을 명시하고, ?v= 시간을 붙여 브라우저가 새 이미지를 강제로 불러오게 합니다.
+            img.src = "./" + num + ".PNG?v=" + new Date().getTime(); 
+            img.style.display = "block";
+            img.style.animation = 'none';
+            img.offsetHeight;
+            img.style.animation = 'pop 0.4s ease-out';
+            
+            img.onerror = function() {
+                console.error(num + ".PNG 파일을 불러오는데 실패했습니다.");
+            };
+        }
+
+        function calculateSum() {
+            if (val1 === 0 || val2 === 0) return alert("두 친구를 먼저 골라주세요!");
+
+            const sum = val1 + val2;
+            const resultImg = document.getElementById('img-result');
+            
+            resultImg.src = "./" + sum + ".PNG?v=" + new Date().getTime(); 
+            resultImg.style.display = "block";
+            resultImg.classList.add('dance');
+
+            speak(val1 + " 더하기 " + val2 + "는 " + sum + "! 정답입니다!");
+            createConfetti();
+            addSticker();
+        }
+
+        function createConfetti() {
+            for(let i=0; i<20; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.innerText = ['✨','🎉','🎊','🌈','🎈'][Math.floor(Math.random()*5)];
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = '100vh';
+                document.body.appendChild(confetti);
+
+                const animation = confetti.animate([
+                    { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translateY(-100vh) rotate(${Math.random()*360}deg)`, opacity: 0 }
+                ], { duration: 2000 + Math.random()*1000, easing: 'ease-out' });
+
+                animation.onfinish = () => confetti.remove();
+            }
+        }
+
+        function addSticker() {
+            const board = document.getElementById('sticker-board');
+            const s = document.createElement('span');
+            s.className = 'sticker';
+            s.innerText = '⭐';
+            board.appendChild(s);
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ko-KR';
+            window.speechSynthesis.speak(u);
+        }
+    </script>
+</body>
+</html>
